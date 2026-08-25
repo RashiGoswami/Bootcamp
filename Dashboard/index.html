@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Analytics — Executive Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#EA580C" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>
+    </div>
+    <div>
+      <div class="brand-title-row">
+        <h1>Sales Analytics</h1>
+        <span class="live-pill"><span class="live-dot"></span>Live Data</span>
+      </div>
+      <p class="tagline">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg>
+        Real-time store performance &amp; revenue insights &nbsp;·&nbsp; Updated <span id="updatedTime">—</span>
+      </p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="refreshBtn">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.36M21 4v5h-5"/></svg>
+      Refresh
+    </button>
+    <button class="btn btn-solid" id="exportBtn">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13m0 0-4-4m4 4 4-4M4 20h16"/></svg>
+      Export CSV
+    </button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="overview">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    Executive Dashboard
+  </button>
+  <button class="tab" data-tab="products">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+    Products <em id="tabCountProducts"></em>
+  </button>
+  <button class="tab" data-tab="customers">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Customers <em id="tabCountCustomers"></em>
+  </button>
+  <button class="tab" data-tab="orders">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+    Orders Ledger <em id="tabCountOrders"></em>
+  </button>
+</nav>
+
+<main class="content">
+
+  <section class="filterbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="globalSearch" type="text" placeholder="Search by Order #, Customer, or Product…" autocomplete="off">
+    </div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>DATE PERIOD</label>
+        <select id="filterPeriod">
+          <option value="all">All Time</option>
+          <option value="2026-01">January 2026</option>
+          <option value="2026-02">February 2026</option>
+          <option value="2026-03">March 2026</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>PRODUCT</label>
+        <select id="filterProduct">
+          <option value="all">All Products (0)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>CUSTOMER / USER</label>
+        <select id="filterCustomer">
+          <option value="all">All Customers</option>
+        </select>
+      </div>
+      <div class="filter-status" id="filterStatus"><em>Filtering live metrics instantly</em></div>
+    </div>
+  </section>
+
+  <!-- ============= OVERVIEW TAB ============= -->
+  <section class="tab-panel active" id="tab-overview">
+
+    <div class="kpi-row">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-top">
+          <span class="kpi-label">TOTAL REVENUE</span>
+          <span class="kpi-icon kpi-icon-orange"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        </div>
+        <div class="kpi-value" id="kpiRevenue">$0</div>
+        <div class="kpi-foot"><span>Net Sales</span><span class="kpi-tag" id="kpiRevenueOrders">Live</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">TOTAL ORDERS</span>
+          <span class="kpi-icon kpi-icon-gray"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></span>
+        </div>
+        <div class="kpi-value" id="kpiOrders">0</div>
+        <div class="kpi-foot"><span>Processed Orders</span><span class="kpi-tag kpi-tag-green">Count</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">AVG ORDER VALUE</span>
+          <span class="kpi-icon kpi-icon-orange-soft"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+        </div>
+        <div class="kpi-value" id="kpiAov">$0</div>
+        <div class="kpi-foot"><span>Revenue / Order</span><span class="kpi-tag">AOV</span></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">TOTAL DISCOUNT</span>
+          <span class="kpi-icon kpi-icon-amber"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 12 12 20.6a2 2 0 0 1-2.8 0l-7.8-7.8a2 2 0 0 1 0-2.8L9 1.6h9a2 2 0 0 1 2 2Z"/><circle cx="7" cy="7" r="1"/></svg></span>
+        </div>
+        <div class="kpi-value" id="kpiDiscount">$0</div>
+        <div class="kpi-foot"><span>Promotions Saved</span><span class="kpi-tag kpi-tag-amber">Discounts</span></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel span-2">
+        <div class="panel-head">
+          <div>
+            <h2><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#EA580C" stroke-width="2"><path d="m3 17 6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg> Sales &amp; Orders Trend Over Time</h2>
+            <p>Daily metrics progression based on order datetime</p>
+          </div>
+          <div class="seg-toggle" id="trendToggle">
+            <button class="seg active" data-mode="revenue">Revenue</button>
+            <button class="seg" data-mode="orders">Orders Count</button>
+            <button class="seg" data-mode="combined">Combined</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#EA580C" stroke-width="2"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Top Products by Revenue</h2>
+            <p>Highest performing catalog items</p>
+          </div>
+        </div>
+        <div id="topProductsList" class="bar-list"></div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Top Destinations</h2><p>Revenue share by coverage country</p></div>
+        </div>
+        <div id="destList" class="rank-list"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>eSIM vs Physical SIM</h2><p>Revenue split by fulfilment mode</p></div>
+        </div>
+        <div class="chart-wrap chart-wrap-donut"><canvas id="simModeChart"></canvas></div>
+        <div class="legend-row" id="simModeLegend"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Top Customers</h2><p>By lifetime revenue</p></div>
+        </div>
+        <div id="topCustomersList" class="rank-list"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Desk Performance</h2><p>Orders processed per staff account</p></div>
+      </div>
+      <div id="staffList" class="staff-grid"></div>
+    </div>
+
+  </section>
+
+  <!-- ============= PRODUCTS TAB ============= -->
+  <section class="tab-panel" id="tab-products">
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Product Catalog</h2><p id="productsSubhead">All eSIM &amp; physical SIM plans</p></div>
+        <div class="table-search"><input id="productsSearch" type="text" placeholder="Filter catalog…"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="productsTable">
+          <thead>
+            <tr>
+              <th data-key="name">Product</th>
+              <th data-key="sim_mode">Mode</th>
+              <th data-key="validity" class="num">Validity</th>
+              <th data-key="amount" class="num">List Price</th>
+              <th data-key="orders" class="num">Orders</th>
+              <th data-key="revenue" class="num">Revenue</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager" id="productsPager"></div>
+    </div>
+  </section>
+
+  <!-- ============= CUSTOMERS TAB ============= -->
+  <section class="tab-panel" id="tab-customers">
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Customer Directory</h2><p id="customersSubhead">Registered travellers</p></div>
+        <div class="table-search"><input id="customersSearch" type="text" placeholder="Filter customers…"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="customersTable">
+          <thead>
+            <tr>
+              <th data-key="name">Customer</th>
+              <th data-key="country_code">Country Code</th>
+              <th data-key="joined">Joined</th>
+              <th data-key="orders" class="num">Orders</th>
+              <th data-key="revenue" class="num">Revenue</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager" id="customersPager"></div>
+    </div>
+  </section>
+
+  <!-- ============= ORDERS TAB ============= -->
+  <section class="tab-panel" id="tab-orders">
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Orders Ledger</h2><p id="ordersSubhead">Full transaction history</p></div>
+      </div>
+      <div class="table-wrap">
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th data-key="order_no">Order #</th>
+              <th data-key="date">Date</th>
+              <th data-key="customer">Customer</th>
+              <th data-key="product">Product</th>
+              <th data-key="sim_mode">Mode</th>
+              <th data-key="amount" class="num">Amount</th>
+              <th data-key="discount" class="num">Discount</th>
+              <th data-key="net" class="num">Net</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager" id="ordersPager"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>Sales Analytics · compiled from <code>orders_rows.csv</code>, <code>products_rows.csv</code>, <code>users_rows.csv</code>, <code>destinations_rows.csv</code></span>
+  <span id="footRange"></span>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
